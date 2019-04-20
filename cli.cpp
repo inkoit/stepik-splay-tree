@@ -7,17 +7,21 @@
 
 #include <iostream>
 
+// Функтор нормализации для задания
+// Почему функтор -- чтобы не забывать обновлять сумму
 class F
 {
 public:
     int64_t operator()(int64_t x) { return (x % m_p + m_sum) % m_p; }
 
+    // Присваивание новой суммы
     F & operator=(const int64_t & sum)
     {
         m_sum = sum;
         return *this;
     }
 
+    // Вывод суммы в поток
     friend std::ostream & operator<<(std::ostream & os, const F & f) { return os << f.m_sum; }
 
 private:
@@ -27,6 +31,7 @@ private:
 
 int main()
 {
+    // Чучуть повышаем быстродействие на огромных входных данных -- как раз сколько подаёт платформа сдачи заданий
     std::ios::sync_with_stdio(false);
 
     SplayTree tree;
