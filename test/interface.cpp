@@ -49,13 +49,13 @@ TEST_F(SplayTreeInterface, Remove)
 
 TEST_F(SplayTreeInterface, Find)
 {
-    EXPECT_NE(nullptr, m_tree.Find(4));
+    EXPECT_TRUE(m_tree.Contains(4));
     CheckState(m_init_state);
 
-    EXPECT_NE(nullptr, m_tree.Find(5));
+    EXPECT_TRUE(m_tree.Contains(5));
     CheckState("(((1, 1) <- 2, 6 -> (3, 3)) <- 4, 10) <- 5, 28 -> (6, 13 -> (7, 7))");
 
-    EXPECT_EQ(nullptr, m_tree.Find(0));
+    EXPECT_FALSE(m_tree.Contains(0));
     CheckState("1, 28 -> ((2, 9 -> ((3, 3) <- 4, 7)) <- 5, 27 -> (6, 13 -> (7, 7)))");
 }
 

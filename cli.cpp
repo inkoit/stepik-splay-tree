@@ -60,7 +60,7 @@ int main()
                     tree.Remove(x);
                     break;
                 case '?':
-                    std::cout << (tree.Find(x) ? "Found\n" : "Not found\n");
+                    std::cout << (tree.Contains(x) ? "Found\n" : "Not found\n");
                     break;
             }
         }

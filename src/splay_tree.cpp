@@ -47,30 +47,34 @@ void SplayTree::Remove(int64_t value)
         return;
     }
 
-    auto found = Find(value);
-    if (found && (m_root = Merge(found->m_left, found->m_right)))
+    // Функция может вернуть не тот элемент, который нужно, поэтому необходимо дополнительно проверить, что он
+    // соответствует требуемому значению
+    auto found = FindNearest(m_root, value);
+    if (found->m_value == value && (m_root = Merge(found->m_left, found->m_right)))
     {
         m_root->m_parent = nullptr;
     }
 }
 
-std::shared_ptr<SplayTree::Node> SplayTree::Find(int64_t value)
+bool SplayTree::Contains(int64_t x)
 {
     if (!m_root)
     {
-        return nullptr;
+        return false;
     }
 
-    m_root = FindNearest(m_root, value);
-    return m_root->m_value == value ? m_root : nullptr;
+    m_root = FindNearest(m_root, x);
+    return m_root->m_value == x;
 }
 
 int64_t SplayTree::Sum(int64_t a, int64_t b)
 {
+    // Делим дерево на три части: (-inf, a), [a, b), [b, +inf)
     std::shared_ptr<Node> left, mid, right;
     std::tie(left, mid) = Split(m_root, a);
     std::tie(mid, right) = Split(mid, b);
 
+    // Запоминаем результат, если не null, и восстанавливаем всё в !!обратном порядке!!
     auto res = mid ? mid->m_sum : 0;
     m_root = Merge(left, Merge(mid, right));
 
@@ -84,9 +88,10 @@ std::shared_ptr<SplayTree::Node> SplayTree::Insert(std::shared_ptr<SplayTree::No
         return nullptr;
     }
 
+    // Выбираем нужного ребенка и, если он существует, спускаемся дальше, иначе создаём ребенка
     auto & child = value < node->m_value ? node->m_left : node->m_right;
     auto inserted = child ? Insert(child, value) : (child = std::make_shared<Node>(value, node));
-    node->m_sum += inserted ? value : 0;
+    node->m_sum += inserted ? value : 0; // Добавляем в сумму по пути обратно, если вставка прошла успешно
     return inserted;
 }
 
@@ -149,6 +154,7 @@ SplayTree::Merge(std::shared_ptr<SplayTree::Node> v1, std::shared_ptr<SplayTree:
     }
     v1->m_parent = v2->m_parent = nullptr;
 
+    // Поиск максимума в v1 (самый правый элемент)
     for (; v1->m_right; v1 = v1->m_right) {}
 
     Splay(v1);
@@ -160,9 +166,10 @@ SplayTree::Merge(std::shared_ptr<SplayTree::Node> v1, std::shared_ptr<SplayTree:
 
 std::shared_ptr<SplayTree::Node> SplayTree::Splay(std::shared_ptr<SplayTree::Node> x)
 {
+    // Выполняем цикл до тех пор, пока родителем не будет nullptr (пока x не root)
     for (auto p = x->m_parent; p; p = x->m_parent)
     {
-        auto g = p->m_parent;
+        auto g = p->m_parent; // дед
         if (!g)
         {
             // zig
@@ -170,7 +177,7 @@ std::shared_ptr<SplayTree::Node> SplayTree::Splay(std::shared_ptr<SplayTree::Nod
         }
         else
         {
-            auto r = g->m_parent;
+            auto r = g->m_parent; // прадед
 
             if ((x == p->m_left && p == g->m_left) || (x == p->m_right && p == g->m_right))
             {
@@ -183,8 +190,8 @@ std::shared_ptr<SplayTree::Node> SplayTree::Splay(std::shared_ptr<SplayTree::Nod
                 // zig-zag
                 Rotate(x, p);
 
-                // ВАЖНО: после поворота выше рассматриваемое поддерево не находится в согласованном состоянии, т.к.
-                // g по-прежнему считает p своим потомком
+                // ВАЖНО: после поворота выше рассматриваемое поддерево c корнем в g не находится в согласованном
+                // состоянии, т.к. g по-прежнему считает p своим потомком
                 (g->m_left == p ? g->m_left : g->m_right) = x;
 
                 Rotate(x, g);
@@ -202,7 +209,7 @@ std::shared_ptr<SplayTree::Node> SplayTree::Splay(std::shared_ptr<SplayTree::Nod
 
 void SplayTree::Rotate(std::shared_ptr<SplayTree::Node> x, std::shared_ptr<SplayTree::Node> y)
 {
-    // Запись x в потомка родителя должна производиться в вызывающем коде
+    // Здесь необходимо обращать внимание на то, что A, B, C могут быть nullptr, а также на изменение значения суммы у
 
     if (y->m_left == x)
     {
